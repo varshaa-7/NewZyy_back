@@ -8,6 +8,7 @@ require("dotenv").config();
 
 const app= express();
 const PORT = process.env.PORT || 5000
+const NEWS_API_KEY = process.env.NEWS_API_KEY;
 
 const NotesModel = require("./models/notesModel");
 
@@ -32,21 +33,16 @@ mongoose.connect(process.env.MONGO_URI,{
 //API ROUTES
 app.use("/api", routes);
 app.get('/api/news', async (req, res) => {
+  const { country, category, page, pageSize } = req.query;
+  const url = `https://newsapi.org/v2/top-headlines?country=${country}&category=${category}&apiKey=${NEWS_API_KEY}&page=${page}&pageSize=${pageSize}`;
+  
   try {
-    const response = await axios.get('https://newsapi.org/v2/top-headlines', {
-      params: {
-        country: req.query.country,
-        category: req.query.category,
-        apiKey: process.env.NEWS_API_KEY,
-        page: req.query.page,
-        pageSize: req.query.pageSize,
-      },
-    });
-    console.log(response.data);
-    res.json(response.data);
+      const response = await fetch(url);
+      const data = await response.json();
+      res.json(data);
   } catch (error) {
-    console.error('Error fetching news:', error.message);
-    res.status(500).json({ error: error.message });
+      console.error('Error fetching news:', error);
+      res.status(500).json({ error: 'Failed to fetch news' });
   }
 });
 
